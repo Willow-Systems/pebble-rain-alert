@@ -2,7 +2,10 @@ var UI = require('ui');
 var ajax = require('ajax');
 var Wakeup = require('wakeup');
 
-var darkSkyApiKey = ""
+//All of these should be retrieved from Settings
+var darkSkyApiKey = "";
+var refreshFrequency = 30; 
+
 var uniquePinID = "83473842"
 
 var debug = true;
@@ -42,17 +45,16 @@ function getWeatherData(pos) {
 
 function setWakeUpAlarm() {
 
-	var wakeupOffset = 3600;
 
 	if (debug) {
-		wakeupOffset = 60;
+		refreshFrequency = 1;
 	}
 
 	debugLog("Set Wakeup", true);
 	Wakeup.schedule(
 	  {
-			// Set the wakeup event for one hour from now (or 1 min for debug)
-	    time: Date.now() / 1000 + wakeupOffset,
+			// Set the wakeup event for refreshFrequency from now (or 1 min for debug)
+	    time: Date.now() / 1000 + (refreshFrequency * 60),
 	    // Pass data for the app on launch
 	    data: { hello: 'world' }
 	  },
@@ -81,7 +83,6 @@ function getWeatherData_cb(data) {
 	debugLog("Parse Weather Data", true);
 	debugLog("dbg::data:" + JSON.stringify(data));
 	for (i = 0; i < data.hourly.data.length; i++) {
-		//if (data.hourly.data[i].icon === "rain" || data.hourly.data[i].icon === "snow" || data.hourly.data[i].icon === "sleet") {
 		debugLog("ICON: " + data.hourly.data[i].icon);
 		debugLog("Index: " + ["rain","snow","sleet"].indexOf(data.hourly.data[i].icon));
 
@@ -146,7 +147,7 @@ if (debug) {
 		color: "white",
 		backgroundColor: "black",
 		style: "small",
-		fullscreen: true,
+		status: false,
 		scrollable: true,
 		body: 'Start'
 	});
@@ -156,14 +157,19 @@ if (debug) {
 } else {
 
 	card = new UI.Card({
-		title: 'Rain Alert',
-		color: "white",
-		backgroundColor: "black",
-		style: "large",
-		subtitle: "Syncing",
-		fullscreen: true,
-		scrollable: false
+		title: 'Rain Alert - Powered by DarkSky',
+		//color: "white",
+		//backgroundColor: "black",
+		status: false,
+		style: "small"
 	});
+
+	if (typeof darkSkyApiKey !== 'undefined' && darkSkyApiKey !== "") { //Should we actually check if full process of quiering the API works?
+		card.body("👍 You're all set! Pins should start appearing in your timeline when it's going to rain or snow.");
+	}
+	else {
+		card.body("😞 You're not set up just yet! Check settings on your phone!");
+	}
 
 	card.show();
 
