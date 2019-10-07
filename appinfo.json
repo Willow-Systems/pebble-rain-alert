@@ -1,0 +1,42 @@
+{
+  "appKeys": {},
+  "capabilities": [
+    "configurable"
+  ],
+  "companyName": "Willow Systems",
+  "longName": "Rain Warning",
+  "resources": {
+    "media": [
+      {
+        "file": "images/gtIcon.png",
+        "menuIcon": true,
+        "name": "IMAGE_ICON",
+        "type": "png"
+      },
+      {
+        "file": "fonts/UbuntuMono-Regular.ttf",
+        "name": "MONO_FONT_14",
+        "type": "font"
+      },
+      {
+        "file": "images/tile_splash.png",
+        "name": "IMAGE_TILE_SPLASH",
+        "type": "png"
+      }
+    ]
+  },
+  "sdkVersion": "3",
+  "shortName": "Rain Warning",
+  "targetPlatforms": [
+    "diorite",
+    "basalt",
+    "chalk",
+    "aplite"
+  ],
+  "uuid": "e105d63f-26b6-4615-a27c-5a35dbb27bb5",
+  "versionCode": 1,
+  "versionLabel": "1.0",
+  "watchapp": {
+    "watchface": false
+  }
+}
