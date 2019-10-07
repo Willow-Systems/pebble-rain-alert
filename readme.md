@@ -1,12 +1,12 @@
 # Rain Alert
-Creates timeline pins just as the rain is about to pour
+![](https://img.shields.io/badge/Release_Status-Early_Alpha-cc4444.svg)    
 
-![](https://img.shields.io/badge/Release_Status-No_preview-cc4444.svg)
+Creates timeline pins just as the rain is about to pour
 
 ## About
 Rain alert runs once an hour and checks the rain for the rest of the day. If it's due to rain later Rain Alert will create a timeline pin at that point
 
-## Pre-Alpha implementation checklist
+## Beta roadmap checklist
 
 - [x] Get location of pebble
 - [x] Get weather information from darkSkyApi
@@ -18,6 +18,12 @@ Rain alert runs once an hour and checks the rain for the rest of the day. If it'
 - [ ] Implement settings page (for API Key and location override)
 - [ ] Only run the weather-pin-check when the app is started from a wakeup event
 - [ ] Add toggle when the app is opened from the app menu
+
+## Build the Alpha
+
+The only way to install *Rain Alert* at the moment is to compile it youself with your darksky api key. No timeline pins will actually be created.
+
+Clone the git repo and set the value of the variable `darkSkyApiKey` to your API key. Then build locally using the `pebble build` command and side load to your watch.
 
 ## Authors
 
