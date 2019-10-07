@@ -27,5 +27,5 @@ Clone the git repo and set the value of the variable `darkSkyApiKey` to your API
 
 ## Authors
 
-Idea by @Wowfunhappy
+Idea by @Wowfunhappy   
 Code by @Wowfunhappy & @Will0
