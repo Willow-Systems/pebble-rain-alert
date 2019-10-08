@@ -10,7 +10,7 @@ var uniquePinID = "83473842"
 
 //debug flags
 //Debug logging and behaviour
-var debug = false;
+var debug = true;
 //Prevent the app from creating wakeup events
 var debug_disable_wakeup_creation = true;
 //Override location acquisition
@@ -87,19 +87,7 @@ function getWeatherData_cb(data) {
 				duration = duration + 60;
 			}
 
-			if (icon === "rain") {
-				tinyIcon = "system://images/TIMELINE_HEAVY_RAIN";
-				smallIcon = "system://images/TIMELINE_HEAVY_RAIN";
-				largeIcon = "system://images/TIMELINE_HEAVY_RAIN";
-			}	else if (icon === "snow") {
-				tinyIcon = "system://images/TIMELINE_HEAVY_SNOW";
-				smallIcon = "system://images/TIMELINE_HEAVY_SNOW";
-				largeIcon = "system://images/TIMELINE_HEAVY_SNOW";
-			}	else if (icon === "sleet") {
-				tinyIcon = "system://images/TIMELINE_RAINING_AND_SNOWING";
-				smallIcon = "system://images/TIMELINE_RAINING_AND_SNOWING";
-				largeIcon = "system://images/TIMELINE_RAINING_AND_SNOWING";
-			}
+			pebbleIcon = getPebbleIcon(icon);
 
 			debugLog("Create Pin @ " + data.hourly.data[i].time, true);
 			// pin = {
@@ -112,20 +100,14 @@ function getWeatherData_cb(data) {
 			// 		"title": data.hourly.data[i].summary,
 			// 		"locationName": data.timezone, //todo: resolve lat/lon to friendly name?
 			// 		"subtitle": data.temperature + "°";
-			// 		"tinyIcon": tinyIcon,
-			// 		"smallIcon": smallIcon,
-			// 		"largeIcon": largeIcon,
+			// 		"tinyIcon": pebbleIcon,
+			// 		"smallIcon": pebbleIcon,
+			// 		"largeIcon": pebbleIcon,
 			// 	}
 			// };
 
 			// //fantasyFunction.timeline.push(pin);
 			// console.log(JSON.stringify(pin));
-
-			Wakeup.launch(function(e) {
-				if (! e.wakeup) {
-					displaySummary(data);
-				}
-			});
 
 		} else {
 			//fantasyFunction.timeline.delete("wowfunhappy-will-it-rain-" + data.hourly.data[i].time);
@@ -133,7 +115,25 @@ function getWeatherData_cb(data) {
 		}
 	}
 
+	Wakeup.launch(function(e) {
+		if (! e.wakeup) {
+			displaySummary(data);
+		}
+	});
+
 	setWakeUpAlarm();
+}
+
+function getPebbleIcon(darkSkyIcon) {
+	if (darkSkyIcon === "rain") {
+		return "system://images/TIMELINE_HEAVY_RAIN";
+	} else if (darkSkyIcon === "snow") {
+		return "system://images/TIMELINE_HEAVY_SNOW";
+	} else if (darkSkyIcon === "sleet") {
+		return "system://images/TIMELINE_RAINING_AND_SNOWING";
+	} else {
+		return "system://images/TIMELINE_WEATHER";
+	}
 }
 
 function displaySummary(data) {
@@ -183,7 +183,6 @@ function setWakeUpAlarm() {
 debugLog("start");
 
 if (debug) {
-
 	card = new UI.Card({
   	title: 'Rain Alert',
 		color: "black",
@@ -195,9 +194,9 @@ if (debug) {
 	});
 
 	card.show();
-
-} else if (typeof darkSkyApiKey === 'undefined' || darkSkyApiKey === "") { //Should we actually check if full process of quiering the API works?
-		card = new UI.Card({
+}
+else if (typeof darkSkyApiKey === 'undefined' || darkSkyApiKey === "") { //Should we actually check if full process of quiering the API works?
+	card = new UI.Card({
 		status: blackStatusBar,
 		style: "large",
 		body: "😞 Rain Alert isn't ready just yet! Open settings on your phone."
