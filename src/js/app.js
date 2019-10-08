@@ -4,11 +4,16 @@ var Wakeup = require('wakeup');
 
 //All of these should be retrieved from Settings
 var darkSkyApiKey = "";
-var refreshFrequency = 30; 
+var refreshFrequency = 30;
 
 var uniquePinID = "83473842"
 
+//debug flags
+//Debug logging and behaviour
 var debug = true;
+//Prevent the app from creating wakeup events
+var debug_disable_wakeup_creation = true;
+
 card = {};
 
 function debugLog(msg, onwatch) {
@@ -24,7 +29,7 @@ function getLatLon(callback) {
 	debugLog("Get Location", true);
 
 	navigator.geolocation.getCurrentPosition(callback, function() {
-		debugLog("Could not get location");
+		debugLog("Could not get location", true);
 	}, {
 		enableHighAccuracy: true,
 		maximumAge: 10000,
@@ -41,42 +46,6 @@ function getWeatherData(pos) {
 		url: 'https://api.darksky.net/forecast/' + darkSkyApiKey + "/" + pos.coords.latitude + ',' + pos.coords.longitude + '?exclude=currently,minutely,daily,alerts,flags',
 		 type: 'json'
 	 }, getWeatherData_cb);
-}
-
-function setWakeUpAlarm() {
-
-
-	if (debug) {
-		refreshFrequency = 1;
-	}
-
-	debugLog("Set Wakeup", true);
-	Wakeup.schedule(
-	  {
-			// Set the wakeup event for refreshFrequency from now (or 1 min for debug)
-	    time: Date.now() / 1000 + (refreshFrequency * 60),
-	    // Pass data for the app on launch
-	    data: { hello: 'world' }
-	  },
-	  function(e) {
-	    if (e.failed) {
-	      // Log the error reason
-	      console.log('Wakeup set failed: ' + e.error);
-	    } else {
-	      console.log('Wakeup set! Event ID: ' + e.id);
-				debugLog("Wakeup Set", true);
-				debugLog("Close", true);
-
-				if (debug) {
-					debugLog("Abort close (debug)", true);
-				} else {
-					card.hide();
-					card.close();
-				}
-
-	    }
-	  }
-	);
 }
 
 function getWeatherData_cb(data) {
@@ -138,18 +107,64 @@ function getWeatherData_cb(data) {
 	setWakeUpAlarm();
 }
 
+function setWakeUpAlarm() {
+
+	if (debug) {
+		refreshFrequency = 1;
+	}
+
+	debugLog("Set Wakeup", true);
+
+	if (debug_disable_wakeup_creation === false) {
+		Wakeup.schedule(
+	  	{
+				// Set the wakeup event for refreshFrequency from now (or 1 min for debug)
+	    	time: Date.now() / 1000 + (refreshFrequency * 60),
+	    },
+	  	function(e) {
+	    	if (e.failed) {
+
+	      	// Log the error reason
+	      	debugLog('Wakeup set failed: ' + e.error);
+
+	    	} else {
+
+	      	console.log('Wakeup set! Event ID: ' + e.id);
+					debugLog("Wakeup Set", true);
+					debugLog("Close", true);
+
+					if (debug) {
+
+						//Don't actually close
+						debugLog("Abort close (debug)", true);
+
+					} else {
+
+						card.hide();
+						card.close();
+
+					}
+
+	    	}
+	  	}
+		);
+	}
+}
+
 //start
 debugLog("start");
 
 if (debug) {
+
 	card = new UI.Card({
   	title: 'Rain Alert',
-		color: "white",
-		backgroundColor: "black",
+		color: "black",
+		backgroundColor: "white",
 		style: "small",
 		status: false,
 		scrollable: true,
 		body: 'Start'
+
 	});
 
 	card.show();
@@ -165,15 +180,17 @@ if (debug) {
 	});
 
 	if (typeof darkSkyApiKey !== 'undefined' && darkSkyApiKey !== "") { //Should we actually check if full process of quiering the API works?
+
 		card.body("👍 You're all set! Pins should start appearing in your timeline when it's going to rain or snow.");
-	}
-	else {
+
+	}	else {
+
 		card.body("😞 You're not set up just yet! Check settings on your phone!");
+
 	}
 
 	card.show();
 
 }
-
 
 getLatLon(getWeatherData);

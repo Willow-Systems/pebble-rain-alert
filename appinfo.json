@@ -4,11 +4,11 @@
     "configurable"
   ],
   "companyName": "Willow Systems",
-  "longName": "Rain Warning",
+  "longName": "Rain Alert",
   "resources": {
     "media": [
       {
-        "file": "images/gtIcon.png",
+        "file": "images/appicon.png",
         "menuIcon": true,
         "name": "IMAGE_ICON",
         "type": "png"
@@ -26,7 +26,7 @@
     ]
   },
   "sdkVersion": "3",
-  "shortName": "Rain Warning",
+  "shortName": "Rain Alert",
   "targetPlatforms": [
     "diorite",
     "basalt",
