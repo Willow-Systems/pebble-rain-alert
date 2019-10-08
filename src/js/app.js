@@ -10,7 +10,7 @@ var uniquePinID = "83473842"
 
 //debug flags
 //Debug logging and behaviour
-var debug = true;
+var debug = false;
 //Prevent the app from creating wakeup events
 var debug_disable_wakeup_creation = true;
 //Override location acquisition
@@ -18,6 +18,11 @@ var debug_use_fixed_location = true;
 var debug_fixed_lat = "52.916291";
 var debug_fixed_lon = "-3.927604";
 
+var blackStatusBar = {
+	color: "white",
+	backgroundColor: "black",
+	separator: 'none'
+};
 card = {};
 
 function debugLog(msg, onwatch) {
@@ -60,7 +65,7 @@ function getWeatherData(pos) {
 	debugLog("dbg::pos::lon:" + pos.coords.longitude);
 
 	ajax({
-		url: 'https://api.darksky.net/forecast/' + darkSkyApiKey + "/" + pos.coords.latitude + ',' + pos.coords.longitude + '?exclude=currently,minutely,daily,alerts,flags',
+		url: 'https://api.darksky.net/forecast/' + darkSkyApiKey + "/" + pos.coords.latitude + ',' + pos.coords.longitude + '?exclude=currently,daily,alerts,flags?units=auto',
 		 type: 'json'
 	 }, getWeatherData_cb, getWeatherData_ecb);
 }
@@ -77,7 +82,7 @@ function getWeatherData_cb(data) {
 			icon = data.hourly.data[i].icon;
 			duration = 60;
 
-			while (data.hourly.data[i+1].icon === icon) {
+			while (i < data.hourly.data.length - 1 && data.hourly.data[i+1].icon === icon) {
 				i++;
 				duration = duration + 60;
 			}
@@ -115,7 +120,14 @@ function getWeatherData_cb(data) {
 
 			// //fantasyFunction.timeline.push(pin);
 			// console.log(JSON.stringify(pin));
-		}	else {
+
+			Wakeup.launch(function(e) {
+				if (! e.wakeup) {
+					displaySummary(data);
+				}
+			});
+
+		} else {
 			//fantasyFunction.timeline.delete("wowfunhappy-will-it-rain-" + data.hourly.data[i].time);
 			debugLog("Delete pin @ " + data.hourly.data[i].time);
 		}
@@ -123,6 +135,15 @@ function getWeatherData_cb(data) {
 
 	setWakeUpAlarm();
 }
+
+function displaySummary(data) {
+	card = new UI.Card({
+		status: blackStatusBar,
+		body: data.minutely.summary + " " + data.hourly.summary
+	});
+	card.show();
+}
+
 function getWeatherData_ecb(data) {
 	//This is the error callback
 	debugLog("Request Failed", true)
@@ -152,19 +173,6 @@ function setWakeUpAlarm() {
 
 	      	console.log('Wakeup set! Event ID: ' + e.id);
 					debugLog("Wakeup Set", true);
-					debugLog("Close", true);
-
-					if (debug) {
-
-						//Don't actually close
-						debugLog("Abort close (debug)", true);
-
-					} else {
-
-						card.hide();
-						card.close();
-
-					}
 
 	    	}
 	  	}
@@ -184,33 +192,18 @@ if (debug) {
 		status: false,
 		scrollable: true,
 		body: 'Start'
-
 	});
 
 	card.show();
 
-} else {
-
-	card = new UI.Card({
-		title: 'Rain Alert - Powered by DarkSky',
-		//color: "white",
-		//backgroundColor: "black",
-		status: false,
-		style: "small"
+} else if (typeof darkSkyApiKey === 'undefined' || darkSkyApiKey === "") { //Should we actually check if full process of quiering the API works?
+		card = new UI.Card({
+		status: blackStatusBar,
+		style: "large",
+		body: "😞 Rain Alert isn't ready just yet! Open settings on your phone."
 	});
 
-	if (typeof darkSkyApiKey !== 'undefined' && darkSkyApiKey !== "") { //Should we actually check if full process of quiering the API works?
-
-		card.body("👍 You're all set! Pins should start appearing in your timeline when it's going to rain or snow.");
-
-	}	else {
-
-		card.body("😞 You're not set up just yet! Check settings on your phone!");
-
-	}
-
 	card.show();
-
 }
 
 getLatLon(getWeatherData);
