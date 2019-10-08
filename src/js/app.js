@@ -13,6 +13,10 @@ var uniquePinID = "83473842"
 var debug = true;
 //Prevent the app from creating wakeup events
 var debug_disable_wakeup_creation = true;
+//Override location acquisition
+var debug_use_fixed_location = true;
+var debug_fixed_lat = "52.916291";
+var debug_fixed_lon = "-3.927604";
 
 card = {};
 
@@ -28,13 +32,26 @@ function debugLog(msg, onwatch) {
 function getLatLon(callback) {
 	debugLog("Get Location", true);
 
-	navigator.geolocation.getCurrentPosition(callback, function() {
-		debugLog("Could not get location", true);
-	}, {
-		enableHighAccuracy: true,
-		maximumAge: 10000,
-		timeout: 1000
-	});
+	console.log(debug_use_fixed_location);
+	if (debug_use_fixed_location) {
+
+		var pos = {}
+		pos.coords = {}
+		pos.coords.latitude = debug_fixed_lat;
+		pos.coords.longitude = debug_fixed_lon;
+		callback(pos)
+
+	} else {
+
+		navigator.geolocation.getCurrentPosition(callback, function() {
+			debugLog("Could not get location", true);
+		}, {
+			enableHighAccuracy: false,
+			maximumAge: 10000,
+			timeout: 1000
+		});
+
+	}
 }
 
 function getWeatherData(pos) {
@@ -45,7 +62,7 @@ function getWeatherData(pos) {
 	ajax({
 		url: 'https://api.darksky.net/forecast/' + darkSkyApiKey + "/" + pos.coords.latitude + ',' + pos.coords.longitude + '?exclude=currently,minutely,daily,alerts,flags',
 		 type: 'json'
-	 }, getWeatherData_cb);
+	 }, getWeatherData_cb, getWeatherData_ecb);
 }
 
 function getWeatherData_cb(data) {
@@ -106,7 +123,11 @@ function getWeatherData_cb(data) {
 
 	setWakeUpAlarm();
 }
-
+function getWeatherData_ecb(data) {
+	//This is the error callback
+	debugLog("Request Failed", true)
+	debugLog("Failed Data: " + JSON.stringify(data))
+}
 function setWakeUpAlarm() {
 
 	if (debug) {
@@ -151,7 +172,6 @@ function setWakeUpAlarm() {
 	}
 }
 
-//start
 debugLog("start");
 
 if (debug) {
