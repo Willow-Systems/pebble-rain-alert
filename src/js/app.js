@@ -71,6 +71,7 @@ function getWeatherData(pos) {
 }
 
 function getWeatherData_cb(data) {
+	// console.log(JSON.stringify(data));
 	debugLog("Parse Weather Data", true);
 	debugLog("dbg::data:" + JSON.stringify(data));
 	for (i = 0; i < data.hourly.data.length; i++) {
@@ -79,35 +80,47 @@ function getWeatherData_cb(data) {
 
 		if (["rain","snow","sleet"].indexOf(data.hourly.data[i].icon) > -1) {
 
+			startTime = new Date(data.hourly.data[i].time * 1000);
 			icon = data.hourly.data[i].icon;
-			duration = 60;
+			summary = data.hourly.data[i].summary
+			intensity = data.hourly.data[i].precipIntensity;
+			probability = data.hourly.data[i].precipProbability;
+			duration = 1;
 
-			while (i < data.hourly.data.length - 1 && data.hourly.data[i+1].icon === icon) {
+			while (i < data.hourly.data.length - 1 && data.hourly.data[i+1].summary === summary) {
 				i++;
-				duration = duration + 60;
+				duration++;
+				if (data.hourly.data[i].precipIntensity > intensity) {
+					intensity = data.hourly.data[i].precipIntensity;
+				}
+				if (data.hourly.data[i].precipProbability > probability) {
+					probability = data.hourly.data[i].precipProbability;
+				}
 			}
 
-			pebbleIcon = getPebbleIcon(icon);
+			endTime = new Date(startTime.getTime() + duration * 3600000);
+			pebbleIcon = getPebbleIcon(icon, intensity);
 
 			debugLog("Create Pin @ " + data.hourly.data[i].time, true);
-			// pin = {
-			// 	"id": "rainalert-" + uniquePinID + "-" + data.hourly.data[i].time,
-			// 	"time": new Date(data.hourly.data[i].time * 1000).toISOString(),
-			// 	"duration": duration,
-			// 	"lastUpdated": new Date(Date.now()).toISOString(),
-			// 	"layout": {
-			// 		"type": "weatherPin",
-			// 		"title": data.hourly.data[i].summary,
-			// 		"locationName": data.timezone, //todo: resolve lat/lon to friendly name?
-			// 		"subtitle": data.temperature + "°";
-			// 		"tinyIcon": pebbleIcon,
-			// 		"smallIcon": pebbleIcon,
-			// 		"largeIcon": pebbleIcon,
-			// 	}
-			// };
+			/*pin = {
+				"id": "rainalert-" + uniquePinID + "-" + data.hourly.data[i].time,
+				"time": startTime.toISOString(),
+				"duration": duration * 60,
+				"lastUpdated": new Date(Date.now()).toISOString(),
+				"layout": {
+					"type": "weatherPin",
+					"title": data.hourly.data[i].summary,
+					"locationName": "Until " + endTime.toLocaleTimeString().replace(":00:00", "").slice(0, -4),
+					//"locationName": data.timezone.substring(data.timezone.indexOf("/") + 1).replace("_", " "), //todo: resolve lat/lon to friendly name?
+					//"subtitle": Math.round(probability * 100) + "%", //If "%" doesn't appear, replace with "/100"
+					"tinyIcon": pebbleIcon,
+					"smallIcon": pebbleIcon,
+					"largeIcon": pebbleIcon,
+				}
+			};*/
 
 			// //fantasyFunction.timeline.push(pin);
-			// console.log(JSON.stringify(pin));
+			//console.log(JSON.stringify(pin));
 
 		} else {
 			//fantasyFunction.timeline.delete("wowfunhappy-will-it-rain-" + data.hourly.data[i].time);
@@ -124,9 +137,14 @@ function getWeatherData_cb(data) {
 	setWakeUpAlarm();
 }
 
-function getPebbleIcon(darkSkyIcon) {
+function getPebbleIcon(darkSkyIcon, intensity) {
 	if (darkSkyIcon === "rain") {
-		return "system://images/TIMELINE_HEAVY_RAIN";
+		if (intensity < 0.098) {
+			return "system://images/TIMELINE_LIGHT_RAIN";
+		}
+		else {
+			return "system://images/TIMELINE_HEAVY_RAIN"
+		}
 	} else if (darkSkyIcon === "snow") {
 		return "system://images/TIMELINE_HEAVY_SNOW";
 	} else if (darkSkyIcon === "sleet") {
