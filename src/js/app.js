@@ -2,19 +2,40 @@ var UI = require('ui');
 var ajax = require('ajax');
 var Wakeup = require('wakeup');
 
+var Settings = require('settings');
+var Clay = require('./clay');
+var clayConfig = require('./config');
+var clay = new Clay(clayConfig, null, {autoHandleEvents: false});
+
+Pebble.addEventListener('showConfiguration', function(e) {
+	Pebble.openURL(clay.generateUrl());
+});
+
+Pebble.addEventListener('webviewclosed', function(e) {
+	if (e && !e.response) {
+		return;
+	}
+	var dict = clay.getSettings(e.response);
+  
+	// Save the Clay settings to the Settings module. 
+	Settings.option(dict);
+});
+
+
 //All of these should be retrieved from Settings
-var darkSkyApiKey = "";
+//var darkSkyApiKey = Settings.data(darkSkyApiKey);
+var darkSkyApiKey = Clay.getItemsByAppKey("darkSkyApiKey");
 var refreshFrequency = 30;
 
 var uniquePinID = "83473842"
 
 //debug flags
 //Debug logging and behaviour
-var debug = true;
+var debug = false;
 //Prevent the app from creating wakeup events
 var debug_disable_wakeup_creation = true;
 //Override location acquisition
-var debug_use_fixed_location = true;
+var debug_use_fixed_location = false;
 var debug_fixed_lat = "52.916291";
 var debug_fixed_lon = "-3.927604";
 
@@ -102,7 +123,7 @@ function getWeatherData_cb(data) {
 			pebbleIcon = getPebbleIcon(icon, intensity);
 
 			debugLog("Create Pin @ " + data.hourly.data[i].time, true);
-			/*pin = {
+			pin = {
 				"id": "rainalert-" + uniquePinID + "-" + data.hourly.data[i].time,
 				"time": startTime.toISOString(),
 				"duration": duration * 60,
@@ -117,7 +138,7 @@ function getWeatherData_cb(data) {
 					"smallIcon": pebbleIcon,
 					"largeIcon": pebbleIcon,
 				}
-			};*/
+			};
 
 			// //fantasyFunction.timeline.push(pin);
 			//console.log(JSON.stringify(pin));
