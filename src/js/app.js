@@ -2,20 +2,27 @@ var UI = require('ui');
 var ajax = require('ajax');
 var Wakeup = require('wakeup');
 var Settings = require('settings');
+var Vector2 = require('vector2');
+var Feature = require('platform/feature');
+
 
 
 //All of these should be retrieved from Settings
-var darkSkyApiKey = "";
+var darkSkyApiKey = "a75422990ca2f8aef9c1b497fe46dee1";
 var refreshFrequency = 30;
 
 //Generate this programatically in the future
 var uniquePinID = "83473842"
+
+var syncIntervals = ["1 hour", "3 hours","8 hours", "12 hours", "24 hours"];
 
 //debug flags
 //Debug logging and behaviour
 var debug = true;
 //Prevent the app from creating wakeup events
 var debug_disable_wakeup_creation = true;
+//Force the app to always behave as though it was started via a wakeup event:
+var debug_force_wakeup_behaviour = false;
 //Override location acquisition
 var debug_use_fixed_location = true;
 var debug_fixed_lat = "52.9162";
@@ -24,6 +31,9 @@ var debug_fixed_lon = "-3.9276";
 pinCache = [];
 
 card = {};
+
+menu = null;
+reload = null;
 
 function loadPinCacheToMemory() {
 	//Load the pin cache and delete any old pins (from cache, we let rws clean them up from tl, duh.)
@@ -67,6 +77,20 @@ function debugLog(msg, onwatch) {
 		if (onwatch) {
 			card.body(card.body() + "\n" + msg);
 		}
+	}
+}
+function boolToEnabled(bool) {
+	if (bool) {
+		return "Enabled"
+	} else {
+		return "Disabled"
+	}
+}
+function intToSyncInterval(i) {
+	if (i > -1 && i < syncIntervals.length) {
+		return syncIntervals[i].toString();
+	} else {
+		return "Something Broke"
 	}
 }
 
@@ -240,46 +264,211 @@ function setWakeUpAlarm() {
 	}
 }
 
-debugLog("start");
-loadPinCacheToMemory();
-
-if (debug) {
-
-	card = new UI.Card({
-  	title: 'Rain Alert',
-		color: "black",
-		backgroundColor: "white",
-		style: "small",
-		status: false,
-		scrollable: true,
-		body: 'Start'
-
-	});
-
-	card.show();
-
-} else {
-
-	card = new UI.Card({
-		title: 'Rain Alert - Powered by DarkSky',
-		//color: "white",
-		//backgroundColor: "black",
-		status: false,
-		style: "small"
-	});
-
-	if (typeof darkSkyApiKey !== 'undefined' && darkSkyApiKey !== "") { //Should we actually check if full process of quiering the API works?
-
-		card.body("👍 You're all set! Pins should start appearing in your timeline when it's going to rain or snow.");
-
-	}	else {
-
-		card.body("😞 You're not set up just yet! Check settings on your phone!");
-
+function santiseSettings() {
+	if (Settings.data("syncEnabled") == null) {
+		Settings.data("syncEnabled", true);
 	}
 
-	card.show();
+	if (Settings.data("syncInterval") == null) {
+		Settings.data("syncInterval", 0);
+	}
+
+}
+function renderSyncScreen() {
+	var wind = new UI.Window({
+		scrollable: false,
+		status: false,
+		backgroundColor: "white"
+	});
+
+	var cloud = new UI.Image({
+		position: Feature.rectangle(new Vector2(32,44),new Vector2(50,59)),
+		size: new Vector2(80,80),
+		backgroundColor: "white",
+		image: "IMAGE_LIGHTHOUSE"
+	});
+
+	var appTitle = new UI.Text({
+		size: new Vector2(130,30),
+		position: Feature.rectangle(new Vector2(28,1),new Vector2(46,20)),
+		text: "Rain Alert",
+		color: "black",
+		font: 'gothic-28',
+		textAlight: "left",
+		textOverflow: "fill",
+		backgroundColor: "white"
+	});
+
+	var subtitle = new UI.Text({
+		size: new Vector2(50,30),
+		position: Feature.rectangle(new Vector2(50,133),new Vector2(68,144)),
+		text: "Syncing",
+		color: "black",
+		font: 'gothic-14',
+		textAlight: "left",
+		textOverflow: "fill",
+		backgroundColor: "white"
+	});
+
+	wind.add(cloud);
+	wind.add(appTitle);
+	wind.add(subtitle);
+	wind.show();
 
 }
 
-getLatLon(getWeatherData);
+function renderAppMenu(oldmenu, activeitem) {
+
+	// if (menu != null) {
+	// 	menu.hide();
+	// }
+
+	menu = new UI.Menu({
+		backgroundColor: 'white',
+		textColor: 'black',
+		highlightBackgroundColor: Feature.color("Electric Blue","black"),
+		highlightTextColor: Feature.color("black","white")
+	});
+
+	menu.sections([{
+		title: 'Rain Alert',
+		items: [{
+			title: 'Syncing',
+			subtitle: boolToEnabled(Settings.data("syncEnabled")),
+			icon: 'IMAGE_SYNC'
+		}, {
+			title: 'Sync Interval',
+			subtitle: intToSyncInterval(Settings.data("syncInterval")),
+			icon: "IMAGE_INTERVAL"
+		}, {
+			title: 'About',
+			icon: "IMAGE_ABOUT"
+		}]
+	}]);
+
+	menu.on('select', function(e) {
+
+		if (e.itemIndex == 0) {
+
+			//Sync toggle
+			console.log("Setting::update::syncEnabled")
+
+			var se = Settings.data("syncEnabled");
+			se = !se;
+			Settings.data("syncEnabled", se);
+
+			console.log("Setting::syncEnabled:" + se)
+			renderAppMenu(menu,e.itemIndex);
+
+		} else if (e.itemIndex == 1) {
+
+			//Sync interval
+			console.log("Setting::update::syncInterval")
+
+			var si = Settings.data("syncInterval");
+
+			si += 1;
+			if (si > syncIntervals.length - 1) {
+				si = 0;
+			}
+
+			console.log("Setting::syncInterval:" + si)
+
+			Settings.data("syncInterval", si);
+			renderAppMenu(menu,e.itemIndex);
+
+		} else if (e.itemIndex == 2) {
+
+			//About
+			var about = new UI.Card({
+  			title: ' Rain Alert',
+				subtitle: 'V0.1',
+				body: 'Authors:\n@Will0\n@Wowfunhappy',
+				subtitlecolor: Feature.color('Electric Blue', 'black'),
+				style: "small",
+				icon: "IMAGE_ICON"
+			});
+			about.show();
+
+		} else {
+			//How on earth did we get here?
+			console.log("How did we get here?");
+		}
+
+	});
+
+	menu.show();
+
+	if (oldmenu != null) {
+		oldmenu.hide();
+	}
+	if (activeitem != null) {
+		menu.selection(0, activeitem);
+	}
+
+}
+
+//;
+//
+// if (debug) {
+//
+// 	card = new UI.Card({
+//   	title: 'Rain Alert',
+// 		color: "black",
+// 		backgroundColor: "white",
+// 		style: "small",
+// 		status: false,
+// 		scrollable: true,
+// 		body: 'Start'
+//
+// 	});
+//
+// 	card.show();
+//
+// } else {
+//
+// 	card = new UI.Card({
+// 		title: 'Rain Alert - Powered by DarkSky',
+// 		//color: "white",
+// 		//backgroundColor: "black",
+// 		status: false,
+// 		style: "small"
+// 	});
+//
+// 	if (typeof darkSkyApiKey !== 'undefined' && darkSkyApiKey !== "") { //Should we actually check if full process of quiering the API works?
+//
+// 		card.body("👍 You're all set! Pins should start appearing in your timeline when it's going to rain or snow.");
+//
+// 	}	else {
+//
+// 		card.body("😞 You're not set up just yet! Check settings on your phone!");
+//
+// 	}
+//
+// 	card.show();
+//
+// }
+//
+
+Wakeup.launch(function(e) {
+
+	debugLog("start");
+	santiseSettings();
+
+  if (e.wakeup || debug_force_wakeup_behaviour) {
+
+    //We were started by a wakeup, sync weather
+		//Create the holding screen
+		renderSyncScreen();
+		//Load the pin cache from localstorage
+		loadPinCacheToMemory();
+		//Get the location, and pass to getWeatherData()
+		getLatLon(getWeatherData);
+
+  } else {
+
+		//The app was launched normally, show the basic settings screen
+		renderAppMenu();
+
+  }
+});

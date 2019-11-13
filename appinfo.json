@@ -22,6 +22,26 @@
         "file": "images/tile_splash.png",
         "name": "IMAGE_TILE_SPLASH",
         "type": "png"
+      },
+      {
+        "file": "images/lighthouse.png",
+        "name": "IMAGE_LIGHTHOUSE",
+        "type": "png"
+      },
+      {
+        "file": "images/interval.png",
+        "name": "IMAGE_INTERVAL",
+        "type": "png"
+      },
+      {
+        "file": "images/sync.png",
+        "name": "IMAGE_SYNC",
+        "type": "png"
+      },
+      {
+        "file": "images/about.png",
+        "name": "IMAGE_ABOUT",
+        "type": "png"
       }
     ]
   },
