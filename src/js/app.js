@@ -8,7 +8,7 @@ var Feature = require('platform/feature');
 
 
 //All of these should be retrieved from Settings
-var darkSkyApiKey = "a75422990ca2f8aef9c1b497fe46dee1";
+var darkSkyApiKey = "";
 var refreshFrequency = 30;
 
 //Generate this programatically in the future
@@ -22,7 +22,7 @@ var debug = true;
 //Prevent the app from creating wakeup events
 var debug_disable_wakeup_creation = true;
 //Force the app to always behave as though it was started via a wakeup event:
-var debug_force_wakeup_behaviour = false;
+var debug_force_wakeup_behaviour = true;
 //Override location acquisition
 var debug_use_fixed_location = true;
 var debug_fixed_lat = "52.9162";
