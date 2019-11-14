@@ -16,6 +16,7 @@ Rain alert runs once an hour and checks the rain for the rest of the day. If it'
 - [ ] Programatically create the timeline pin id per-user (based on pebble serial and time)
 - [ ] Make the UI nicer
 - [ ] Implement settings page (for API Key and location override)
+- [ ] Implement first time run screen
 - [ ] Only run the weather-pin-check when the app is started from a wakeup event
 - [ ] Add toggle when the app is opened from the app menu
 
