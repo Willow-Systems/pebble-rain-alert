@@ -14,6 +14,9 @@ var refreshFrequency = 30;
 //Generate this programatically in the future
 var uniquePinID = "83473842"
 
+//Pre-prod endpoint
+var URL_settings = "https://willow.systems/preprod/pebble-rainalert/config/"
+
 var syncIntervals = ["1 hour", "3 hours","8 hours", "12 hours", "24 hours"];
 
 //debug flags
@@ -22,7 +25,7 @@ var debug = true;
 //Prevent the app from creating wakeup events
 var debug_disable_wakeup_creation = true;
 //Force the app to always behave as though it was started via a wakeup event:
-var debug_force_wakeup_behaviour = true;
+var debug_force_wakeup_behaviour = false;
 //Override location acquisition
 var debug_use_fixed_location = true;
 var debug_fixed_lat = "52.9162";
@@ -269,8 +272,8 @@ function santiseSettings() {
 		Settings.data("syncEnabled", true);
 	}
 
-	if (Settings.data("syncInterval") == null) {
-		Settings.data("syncInterval", 0);
+	if (Settings.option("syncInterval") == null) {
+		Settings.option("syncInterval", 0);
 	}
 
 }
@@ -338,7 +341,7 @@ function renderAppMenu(oldmenu, activeitem) {
 			icon: 'IMAGE_SYNC'
 		}, {
 			title: 'Sync Interval',
-			subtitle: intToSyncInterval(Settings.data("syncInterval")),
+			subtitle: intToSyncInterval(Settings.option("syncInterval")),
 			icon: "IMAGE_INTERVAL"
 		}, {
 			title: 'About',
@@ -365,7 +368,7 @@ function renderAppMenu(oldmenu, activeitem) {
 			//Sync interval
 			console.log("Setting::update::syncInterval")
 
-			var si = Settings.data("syncInterval");
+			var si = Settings.option("syncInterval");
 
 			si += 1;
 			if (si > syncIntervals.length - 1) {
@@ -374,7 +377,7 @@ function renderAppMenu(oldmenu, activeitem) {
 
 			console.log("Setting::syncInterval:" + si)
 
-			Settings.data("syncInterval", si);
+			Settings.option("syncInterval", si);
 			renderAppMenu(menu,e.itemIndex);
 
 		} else if (e.itemIndex == 2) {
@@ -472,3 +475,24 @@ Wakeup.launch(function(e) {
 
   }
 });
+
+Settings.config(
+  { url: URL_settings },
+  function(e) {
+    console.log('closed configurable');
+
+		if (menu != null) {
+			renderAppMenu(menu,0);
+		} else {
+			renderAppMenu();
+		}
+
+    // Show the parsed response
+    console.log(JSON.stringify(e.options));
+
+    // Show the raw response if parsing failed
+    if (e.failed) {
+      console.log(e.response);
+    }
+  }
+);
